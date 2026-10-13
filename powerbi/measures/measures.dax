@@ -1,0 +1,167 @@
+// =============================================================================
+// DAX measures — Automated Pothole Detection and Repair Cost Analysis
+// Create a blank table named "_Measures" (Enter data → one empty column) and add each measure
+// below to it. Definitions match the application's analytics service (server/src/analytics).
+//
+// Rules applied throughout:
+//   * Potholes are counted with DISTINCTCOUNT on the pothole key (never by summing joined rows).
+//   * FactPothole[EstimatedCost] is material + labour ONLY.
+//   * Mobilisation is added ONCE per repair visit present in the current filter context.
+//   * Blank measurements stay blank; they are never treated as zero cost.
+// =============================================================================
+
+// ---------- Counts ----------------------------------------------------------------
+
+Unique Potholes =
+DISTINCTCOUNT ( FactPothole[PotholeKey] )
+
+// "Total detected potholes": model observations before cross-frame de-duplication.
+Total Potholes (frame-level detections) =
+SUM ( FactPothole[FrameDetections] )
+
+Verified Potholes =
+CALCULATE ( [Unique Potholes], FactPothole[IsVerified] = TRUE () )
+
+Pending Review =
+CALCULATE ( [Unique Potholes], FactPothole[VerificationStatus] = "pending_review" )
+
+Not Submitted =
+CALCULATE ( [Unique Potholes], FactPothole[VerificationStatus] = "unsubmitted" )
+
+Minor Potholes =
+CALCULATE ( [Unique Potholes], FactPothole[SeverityKey] = 1 )
+
+Moderate Potholes =
+CALCULATE ( [Unique Potholes], FactPothole[SeverityKey] = 2 )
+
+Severe Potholes =
+CALCULATE ( [Unique Potholes], FactPothole[SeverityKey] = 3 )
+
+Unclassified Potholes =
+CALCULATE ( [Unique Potholes], FactPothole[SeverityKey] = 0 )
+
+Repaired Potholes =
+CALCULATE ( [Unique Potholes], FactPothole[StatusKey] = 4 )
+
+Severe Awaiting Repair =
+CALCULATE ( [Unique Potholes], FactPothole[SeverityKey] = 3, FactPothole[StatusKey] <> 4 )
+
+Measured Potholes =
+CALCULATE ( [Unique Potholes], FactPothole[IsMeasured] = TRUE () )
+
+// Trend helpers using the inactive date relationships.
+Verified (by review date) =
+CALCULATE ( [Unique Potholes], USERELATIONSHIP ( FactPothole[VerifiedDateKey], DimDate[DateKey] ) )
+
+Repaired (by repair date) =
+CALCULATE ( [Unique Potholes], USERELATIONSHIP ( FactPothole[RepairedDateKey], DimDate[DateKey] ) )
+
+// ---------- Costs -----------------------------------------------------------------
+
+Material Cost =
+SUM ( FactPothole[MaterialCost] )
+
+Labour Cost =
+SUM ( FactPothole[LabourCost] )
+
+Variable Cost =
+SUM ( FactPothole[EstimatedCost] )
+
+// One mobilisation charge per distinct repair visit that has at least one measured pothole in
+// the current filter context. No fact-to-fact relationship is needed or allowed.
+Mobilisation Cost =
+SUMX (
+    FILTER ( VALUES ( FactPothole[RepairVisitKey] ), NOT ISBLANK ( FactPothole[RepairVisitKey] ) ),
+    VAR VisitKey = FactPothole[RepairVisitKey]
+    RETURN
+        // ALL() ignores date/road/area filters that reach FactRepairVisit through its own relationships.
+        CALCULATE (
+            MAX ( FactRepairVisit[MobilisationCost] ),
+            FILTER ( ALL ( FactRepairVisit ), FactRepairVisit[RepairVisitKey] = VisitKey )
+        )
+)
+
+Total Estimated Budget =
+[Variable Cost] + [Mobilisation Cost]
+
+// Use with DimArea (Ward / Locality) or DimRoad on the axis. Each visit belongs to one road, so
+// area totals add up to the overall total without double counting.
+Estimated Budget by Area =
+[Total Estimated Budget]
+
+// Mobilisation belongs to visits, not severities, so the severity split is material + labour.
+Estimated Budget by Severity =
+[Variable Cost]
+
+Severe Estimated Cost =
+CALCULATE ( [Total Estimated Budget], FactPothole[SeverityKey] = 3 )
+
+Unrepaired Estimated Budget =
+CALCULATE ( [Total Estimated Budget], FactPothole[StatusKey] <> 4 )
+
+// Actual expenditure: work-order actuals (once per order) + actuals on potholes outside any order.
+Actual Repair Cost =
+VAR VisitActuals =
+    SUMX (
+        FILTER ( VALUES ( FactPothole[AssignedVisitCode] ), NOT ISBLANK ( FactPothole[AssignedVisitCode] ) ),
+        VAR VisitCode = FactPothole[AssignedVisitCode]
+        RETURN
+            CALCULATE (
+                MAX ( FactRepairVisit[ActualCost] ),
+                FILTER ( ALL ( FactRepairVisit ), FactRepairVisit[RepairVisitKey] = VisitCode )
+            )
+    )
+VAR LooseActuals =
+    CALCULATE ( SUM ( FactPothole[ActualCost] ), ISBLANK ( FactPothole[AssignedVisitCode] ) )
+RETURN
+    IF ( ISBLANK ( VisitActuals ) && ISBLANK ( LooseActuals ), BLANK (), VisitActuals + LooseActuals )
+
+// Budget target: create a one-row table "BudgetTarget" with a numeric column [Amount]
+// (Enter data), or replace with your own approved-budget table. Blank when no target exists.
+Budget Target =
+IF ( HASONEVALUE ( BudgetTarget[Amount] ), VALUES ( BudgetTarget[Amount] ), SUM ( BudgetTarget[Amount] ) )
+
+Budget Variance =
+IF ( ISBLANK ( [Budget Target] ), BLANK (), [Budget Target] - [Total Estimated Budget] )
+
+Average Estimated Cost per Pothole =
+DIVIDE ( [Total Estimated Budget], [Measured Potholes] )
+
+// ---------- Trends ----------------------------------------------------------------
+
+// Place DimDate[YearMonth] on the axis; each point is the unique potholes detected that month.
+Monthly Pothole Count =
+[Unique Potholes]
+
+// Note: if one repair visit's potholes were detected in different months, this measure counts
+// its mobilisation in each of those months. The application attributes it to the first month.
+Monthly Budget Trend =
+[Total Estimated Budget]
+
+// ---------- Rates -----------------------------------------------------------------
+
+Verification Rate =
+DIVIDE ( [Verified Potholes], [Unique Potholes] )
+
+Repair Completion Rate =
+DIVIDE ( [Repaired Potholes], [Unique Potholes] )
+
+Measurement Rate =
+DIVIDE ( [Measured Potholes], [Unique Potholes] )
+
+Average Confidence =
+AVERAGE ( FactPothole[Confidence] )
+
+// ---------- Model quality (blank unless an evaluation was recorded) -----------------
+
+Model Precision =
+MAX ( DimModelVersion[Precision] )
+
+Model Recall =
+MAX ( DimModelVersion[Recall] )
+
+Model mAP50 =
+MAX ( DimModelVersion[mAP50] )
+
+Model mAP50-95 =
+MAX ( DimModelVersion[mAP50_95] )

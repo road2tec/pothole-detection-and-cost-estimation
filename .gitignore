@@ -1,0 +1,20 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+
+# Python
+ai-service/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+ai-service/.freeze.txt
+
+# Runtime data — never commit uploads, model weights or exports
+storage/
+model-cache/
+powerbi/exports/*.csv
+powerbi/exports/export-manifest.json

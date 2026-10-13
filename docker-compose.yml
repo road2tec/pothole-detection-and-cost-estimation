@@ -1,0 +1,69 @@
+# Container deployment for Linux/Windows hosts with Docker.
+# NOTE: written for portability but not run in the development environment (Docker was not installed);
+# the services were verified natively. See docs/deployment.md.
+#
+#   cp .env.example .env   # set the three secrets
+#   docker compose up --build
+#   docker compose exec api npm run bootstrap:admin   (with ADMIN_EMAIL / ADMIN_NAME set)
+
+services:
+  mongo:
+    image: mongo:7.0
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.adminCommand("ping")']
+      interval: 10s
+      retries: 10
+
+  ai:
+    build: ./ai-service
+    restart: unless-stopped
+    environment:
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN}
+      STORAGE_DIR: /data/storage
+      MODEL_CACHE_DIR: /data/model-cache
+      DEVICE: cpu
+    volumes:
+      - storage:/data/storage
+      - model-cache:/data/model-cache
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+      ai:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      MONGODB_URI: mongodb://mongo:27017/pothole_intelligence
+      CLIENT_ORIGIN: http://localhost:8080
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      # Set to true behind HTTPS. Plain-HTTP local testing requires NODE_ENV=development instead.
+      COOKIE_SECURE: 'true'
+      AI_SERVICE_URL: http://ai:8000
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN}
+      STORAGE_DIR: /data/storage
+    volumes:
+      - storage:/data/storage
+
+  web:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - '8080:80'
+
+volumes:
+  mongo-data:
+  storage:
+  model-cache:

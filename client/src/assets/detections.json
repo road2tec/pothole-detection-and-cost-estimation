@@ -1,0 +1,65 @@
+{
+ "test_1": {
+  "detections": [
+   {
+    "confidence": 0.86,
+    "bbox": [
+     162,
+     184,
+     352,
+     349
+    ]
+   },
+   {
+    "confidence": 0.8,
+    "bbox": [
+     130,
+     528,
+     266,
+     640
+    ]
+   }
+  ],
+  "inferenceMs": 583.2,
+  "model": "DanielsStulpe/pothole-detection@42b586f1ff38/yolo26_best.pt"
+ },
+ "validation_0": {
+  "detections": [
+   {
+    "confidence": 0.83,
+    "bbox": [
+     168,
+     211,
+     404,
+     384
+    ]
+   }
+  ],
+  "inferenceMs": 550.8,
+  "model": "DanielsStulpe/pothole-detection@42b586f1ff38/yolo26_best.pt"
+ },
+ "test_3": {
+  "detections": [
+   {
+    "confidence": 0.74,
+    "bbox": [
+     166,
+     154,
+     319,
+     281
+    ]
+   },
+   {
+    "confidence": 0.7,
+    "bbox": [
+     243,
+     346,
+     423,
+     453
+    ]
+   }
+  ],
+  "inferenceMs": 515.1,
+  "model": "DanielsStulpe/pothole-detection@42b586f1ff38/yolo26_best.pt"
+ }
+}

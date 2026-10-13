@@ -1,0 +1,22 @@
+{
+  "name": "pothole-intelligence",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Automated Pothole Detection and Repair Cost Analysis — React + Express + MongoDB + Python AI service",
+  "scripts": {
+    "install:all": "npm --prefix server install && npm --prefix client install",
+    "dev": "concurrently -k -n ai,api,web -c yellow,cyan,magenta \"npm:dev:ai\" \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:ai": "node scripts/run-ai.mjs",
+    "dev:api": "npm --prefix server run dev",
+    "dev:web": "npm --prefix client run dev",
+    "build": "npm --prefix server run build && npm --prefix client run build",
+    "test": "npm --prefix server test && npm --prefix client test",
+    "test:ai": "node scripts/run-ai.mjs test",
+    "lint": "npm --prefix server run lint && npm --prefix client run lint",
+    "typecheck": "npm --prefix server run typecheck && npm --prefix client run typecheck",
+    "smoke": "node scripts/e2e-smoke.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

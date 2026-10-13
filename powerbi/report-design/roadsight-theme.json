@@ -1,0 +1,27 @@
+{
+  "name": "RoadSight",
+  "dataColors": ["#1C1F23", "#D97706", "#15803D", "#2563EB", "#A8A29E", "#B42318", "#4D7C0F", "#7C3AED"],
+  "background": "#FFFFFF",
+  "foreground": "#1C1F23",
+  "tableAccent": "#D97706",
+  "good": "#15803D",
+  "neutral": "#B45309",
+  "bad": "#B42318",
+  "maximum": "#B42318",
+  "center": "#D97706",
+  "minimum": "#4D7C0F",
+  "textClasses": {
+    "title": { "fontFace": "Segoe UI Semibold", "fontSize": 13, "color": "#1C1F23" },
+    "label": { "fontFace": "Segoe UI", "fontSize": 10, "color": "#3D434B" },
+    "callout": { "fontFace": "Segoe UI Semibold", "fontSize": 24, "color": "#1C1F23" }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "border": [{ "show": true, "color": { "solid": { "color": "#E2E0D9" } }, "radius": 8 }],
+        "background": [{ "show": true, "color": { "solid": { "color": "#FFFFFF" } } }]
+      }
+    },
+    "page": { "*": { "background": [{ "color": { "solid": { "color": "#F6F5F2" } }, "transparency": 0 }] } }
+  }
+}

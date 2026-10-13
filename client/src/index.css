@@ -1,0 +1,107 @@
+@import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
+
+/* Design tokens: graphite / slate surfaces, off-white canvas, restrained amber accent. */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-canvas: #f6f5f2;
+  --color-surface: #ffffff;
+  --color-subtle: #efeee9;
+  --color-line: #e2e0d9;
+  --color-line-strong: #cfccc2;
+
+  --color-ink: #1c1f23;
+  --color-ink-2: #3d434b;
+  --color-muted: #6b7178;
+  --color-faint: #9aa0a6;
+
+  --color-graphite-950: #14171a;
+  --color-graphite-900: #1c1f23;
+  --color-graphite-800: #262a30;
+  --color-graphite-700: #343941;
+  --color-graphite-600: #4a5059;
+
+  --color-accent: #d97706;
+  --color-accent-strong: #b45309;
+  --color-accent-soft: #fdf3e2;
+  --color-accent-line: #f3d9ad;
+
+  --color-ok: #15803d;
+  --color-ok-soft: #e8f5ec;
+  --color-warn: #b45309;
+  --color-warn-soft: #fdf3e2;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdecea;
+  --color-info: #1d4ed8;
+  --color-info-soft: #e8eefc;
+
+  /* Severity: never conveyed by colour alone — always paired with a text label. */
+  --color-sev-minor: #4d7c0f;
+  --color-sev-minor-soft: #eef5e1;
+  --color-sev-moderate: #b45309;
+  --color-sev-moderate-soft: #fcf0dc;
+  --color-sev-severe: #b42318;
+  --color-sev-severe-soft: #fbe7e5;
+
+  --radius-card: 10px;
+  --shadow-card: 0 1px 2px rgb(20 23 26 / 0.05), 0 1px 1px rgb(20 23 26 / 0.03);
+  --shadow-pop: 0 10px 30px -10px rgb(20 23 26 / 0.25), 0 2px 6px rgb(20 23 26 / 0.08);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-accent-soft);
+  }
+}
+
+@layer utilities {
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+}
+
+/* Leaflet controls in the application palette */
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: #e9e7e1;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 10px;
+  box-shadow: var(--shadow-pop);
+}
+.marker-cluster-custom {
+  background: rgb(28 31 35 / 0.88);
+  color: #fff;
+  border: 2px solid #f59e0b;
+  border-radius: 9999px;
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
